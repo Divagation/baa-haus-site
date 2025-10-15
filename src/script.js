@@ -104,7 +104,24 @@ function handleNavigation(e) {
   }, 1500);
 }
 
+// Load ASCII art
+async function loadAsciiArt() {
+  try {
+    const response = await fetch('ascii-art.txt');
+    const text = await response.text();
+    const asciiArtElement = document.getElementById('asciiArt');
+    if (asciiArtElement) {
+      asciiArtElement.textContent = text;
+    }
+  } catch (error) {
+    console.error('Failed to load ASCII art:', error);
+  }
+}
+
 // Start typing after delay
 setTimeout(() => {
   typeHeader();
 }, startDelay);
+
+// Load ASCII art on page load
+loadAsciiArt();
