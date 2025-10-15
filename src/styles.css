@@ -216,14 +216,16 @@ body.shutdown .terminal-container {
   position: fixed;
   top: 2rem;
   right: 2rem;
-  font-family: var(--font-terminal);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", Monaco, "Courier New", monospace;
   font-size: 0.5rem;
-  line-height: 1;
+  line-height: 1.1;
   color: var(--text-ivory);
   opacity: 0.3;
   white-space: pre;
   pointer-events: none;
   transition: opacity 0.3s ease;
+  tab-size: 4;
+  overflow: visible;
 }
 
 .ascii-art:hover {
