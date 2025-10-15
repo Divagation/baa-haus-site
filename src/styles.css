@@ -210,6 +210,27 @@ body.shutdown .terminal-container {
 }
 
 /* ============================================
+   ASCII Art
+   ============================================ */
+.ascii-art {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  font-family: var(--font-terminal);
+  font-size: 0.5rem;
+  line-height: 1;
+  color: var(--text-ivory);
+  opacity: 0.3;
+  white-space: pre;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.ascii-art:hover {
+  opacity: 0.6;
+}
+
+/* ============================================
    Responsive Design
    ============================================ */
 @media (max-width: 768px) {
@@ -253,5 +274,9 @@ body.shutdown .terminal-container {
 
   .terminal-back {
     font-size: 1rem;
+  }
+
+  .ascii-art {
+    display: none;
   }
 }
