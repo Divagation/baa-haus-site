@@ -695,8 +695,11 @@ function makeMove(fromRow, fromCol, toRow, toCol) {
   // Check for checkmate
   if (isCheckmate(currentTurn)) {
     gameOver = true;
-    const winner = currentTurn === 'white' ? 'black' : 'white';
-    statusInfo.textContent = `checkmate! ${winner} wins!`;
+    if (currentTurn === 'black') {
+      statusInfo.textContent = 'checkmate! you win!';
+    } else {
+      statusInfo.textContent = 'checkmate! brandon wins!';
+    }
   } else if (isKingInCheck(currentTurn)) {
     statusInfo.textContent = 'check!';
   } else {
@@ -710,7 +713,7 @@ function updateTurnInfo() {
   if (currentTurn === 'white') {
     turnInfo.textContent = 'your turn (white)';
   } else {
-    turnInfo.textContent = "ai's turn (black)";
+    turnInfo.textContent = "brandon's turn (black)";
   }
 }
 
@@ -898,7 +901,7 @@ function makeAIMove() {
 
   if (allMoves.length === 0) {
     gameOver = true;
-    statusInfo.textContent = 'checkmate! white wins!';
+    statusInfo.textContent = 'checkmate! you win!';
     return;
   }
 
