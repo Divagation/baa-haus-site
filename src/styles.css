@@ -7,8 +7,7 @@
    ============================================ */
 @font-face {
   font-family: 'Analogue OS';
-  src: url('./assets/fonts/AnalogueOS-Regular.ttf') format('truetype'),
-       url('../assets/fonts/AnalogueOS-Regular.ttf') format('truetype');
+  src: url('./assets/fonts/AnalogueOS-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
