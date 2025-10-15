@@ -111,12 +111,30 @@ function initChess3D() {
 
   // Camera
   camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.1, 1000);
-  camera.position.set(0, 20, 16);
+
+  // Adjust camera for mobile vs desktop
+  const isMobile = window.innerWidth <= 800;
+  if (isMobile) {
+    camera.position.set(0, 28, 20); // Further back on mobile
+  } else {
+    camera.position.set(0, 20, 16);
+  }
   camera.lookAt(0, 0, 0);
 
   // Renderer
   renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
   renderer.setSize(canvas.width, canvas.height);
+
+  // Handle window resize
+  function handleResize() {
+    const rect = canvas.getBoundingClientRect();
+    camera.aspect = rect.width / rect.height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(rect.width, rect.height, false);
+  }
+
+  window.addEventListener('resize', handleResize);
+  setTimeout(handleResize, 100); // Initial resize after setup
 
   // Raycaster for mouse picking
   raycaster = new THREE.Raycaster();

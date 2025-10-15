@@ -25,6 +25,8 @@
       margin-top: 1rem;
       border: 3px solid var(--text-ivory);
       cursor: pointer;
+      max-width: 100%;
+      height: auto;
     }
 
     #chessCanvas.active {
@@ -64,9 +66,33 @@
     }
 
     @media (max-width: 800px) {
+      body {
+        padding: 0.5rem;
+      }
+
+      .terminal-container.game-container {
+        gap: 0.5rem;
+      }
+
+      .terminal-text {
+        font-size: 1.5rem;
+      }
+
+      .game-info {
+        font-size: 1rem;
+        margin-top: 0.5rem;
+      }
+
+      .game-controls {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+      }
+
       #chessCanvas {
-        width: 100%;
-        height: auto;
+        width: 100vw;
+        max-width: calc(100vw - 1rem);
+        height: 60vh;
+        border: 2px solid var(--text-ivory);
       }
     }
   </style>
