@@ -134,14 +134,17 @@ function initChess3D() {
   createBoard();
   createPieces();
 
-  // Mouse controls
+  // Mouse and touch controls
   let isDragging = false;
   let previousMousePosition = { x: 0, y: 0 };
+  let previousTouchDistance = 0;
 
+  // Mouse events
   canvas.addEventListener('mousedown', (e) => {
     if (e.button === 0) { // Left click
       isDragging = true;
       previousMousePosition = { x: e.clientX, y: e.clientY };
+      e.preventDefault();
     }
   });
 
@@ -157,6 +160,7 @@ function initChess3D() {
 
       camera.lookAt(0, 0, 0);
       previousMousePosition = { x: e.clientX, y: e.clientY };
+      e.preventDefault();
     }
   });
 
@@ -171,6 +175,68 @@ function initChess3D() {
 
     camera.position.multiplyScalar(1 + direction * zoomSpeed);
     camera.position.clampLength(10, 40);
+  });
+
+  // Touch events for mobile
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      // Single touch - rotation
+      isDragging = true;
+      previousMousePosition = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      };
+    } else if (e.touches.length === 2) {
+      // Two finger pinch - zoom
+      isDragging = false;
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      previousTouchDistance = Math.sqrt(dx * dx + dy * dy);
+    }
+    e.preventDefault();
+  });
+
+  canvas.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1 && isDragging) {
+      // Rotation
+      const deltaX = e.touches[0].clientX - previousMousePosition.x;
+      const deltaY = e.touches[0].clientY - previousMousePosition.y;
+
+      camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), deltaX * 0.01);
+
+      const axis = new THREE.Vector3().crossVectors(camera.up, camera.position).normalize();
+      camera.position.applyAxisAngle(axis, deltaY * 0.01);
+
+      camera.lookAt(0, 0, 0);
+      previousMousePosition = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      };
+    } else if (e.touches.length === 2) {
+      // Pinch zoom
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (previousTouchDistance > 0) {
+        const delta = distance - previousTouchDistance;
+        const zoomSpeed = 0.01;
+
+        camera.position.multiplyScalar(1 - delta * zoomSpeed);
+        camera.position.clampLength(10, 40);
+      }
+
+      previousTouchDistance = distance;
+    }
+    e.preventDefault();
+  });
+
+  canvas.addEventListener('touchend', (e) => {
+    isDragging = false;
+    if (e.touches.length < 2) {
+      previousTouchDistance = 0;
+    }
+    e.preventDefault();
   });
 
   canvas.addEventListener('click', onCanvasClick);
