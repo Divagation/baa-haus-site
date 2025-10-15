@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>play - baa.haus</title>
+  <meta name="description" content="baa.haus chess">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      padding: 1rem 2rem;
+      overflow: hidden;
+    }
+
+    .terminal-container.game-container {
+      position: static;
+      max-width: 100%;
+      margin: 0;
+      gap: 1rem;
+    }
+
+    #chessCanvas {
+      display: none;
+      margin-top: 1rem;
+      border: 3px solid var(--text-ivory);
+      cursor: pointer;
+    }
+
+    #chessCanvas.active {
+      display: block;
+    }
+
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .game-info {
+      font-family: var(--font-terminal);
+      font-size: 1.25rem;
+      color: var(--text-ivory);
+      margin-top: 1rem;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .game-info.active {
+      opacity: 1;
+    }
+
+    .game-controls {
+      font-family: var(--font-terminal);
+      font-size: 1rem;
+      color: var(--text-ivory);
+      margin-top: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .game-controls.active {
+      opacity: 1;
+    }
+
+    @media (max-width: 800px) {
+      #chessCanvas {
+        width: 100%;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal-container game-container">
+    <a href="index.html" class="back-link terminal-back">← back</a>
+    <div class="terminal-header">
+      <h1 class="terminal-text" id="playText"></h1>
+    </div>
+    <span class="cursor" id="cursor">_</span>
+
+    <canvas id="chessCanvas" width="800" height="600"></canvas>
+
+    <div class="game-info" id="gameInfo">
+      <p id="turnInfo">your turn (white)</p>
+      <p id="statusInfo"></p>
+    </div>
+
+    <div class="game-controls" id="gameControls">
+      <p>drag to rotate • scroll to zoom</p>
+    </div>
+  </div>
+
+  <script src="play.js"></script>
+</body>
+</html>

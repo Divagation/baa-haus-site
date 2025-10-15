@@ -1,0 +1,13 @@
+{
+  "name": "baa-haus-site",
+  "version": "1.0.0",
+  "description": "baa.haus personal website",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "keywords": ["website", "portfolio"],
+  "author": "baa.haus",
+  "license": "MIT"
+}
