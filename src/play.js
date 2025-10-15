@@ -178,40 +178,64 @@ function initChess3D() {
   });
 
   // Touch events for mobile
+  let touchStartTime = 0;
+  let touchStartPos = { x: 0, y: 0 };
+  let hasMoved = false;
+
   canvas.addEventListener('touchstart', (e) => {
+    touchStartTime = Date.now();
+    hasMoved = false;
+
     if (e.touches.length === 1) {
-      // Single touch - rotation
-      isDragging = true;
+      // Single touch - could be tap or drag
       previousMousePosition = {
         x: e.touches[0].clientX,
         y: e.touches[0].clientY
       };
+      touchStartPos = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      };
+      isDragging = false; // Don't start dragging immediately
     } else if (e.touches.length === 2) {
       // Two finger pinch - zoom
       isDragging = false;
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       previousTouchDistance = Math.sqrt(dx * dx + dy * dy);
+      e.preventDefault();
     }
-    e.preventDefault();
   });
 
   canvas.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 1 && isDragging) {
-      // Rotation
-      const deltaX = e.touches[0].clientX - previousMousePosition.x;
-      const deltaY = e.touches[0].clientY - previousMousePosition.y;
+    if (e.touches.length === 1) {
+      // Check if moved significantly
+      const deltaX = e.touches[0].clientX - touchStartPos.x;
+      const deltaY = e.touches[0].clientY - touchStartPos.y;
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-      camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), deltaX * 0.01);
+      if (distance > 10) { // Moved more than 10px, it's a drag
+        hasMoved = true;
+        isDragging = true;
+      }
 
-      const axis = new THREE.Vector3().crossVectors(camera.up, camera.position).normalize();
-      camera.position.applyAxisAngle(axis, deltaY * 0.01);
+      if (isDragging) {
+        // Rotation
+        const dx = e.touches[0].clientX - previousMousePosition.x;
+        const dy = e.touches[0].clientY - previousMousePosition.y;
 
-      camera.lookAt(0, 0, 0);
-      previousMousePosition = {
-        x: e.touches[0].clientX,
-        y: e.touches[0].clientY
-      };
+        camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), dx * 0.01);
+
+        const axis = new THREE.Vector3().crossVectors(camera.up, camera.position).normalize();
+        camera.position.applyAxisAngle(axis, dy * 0.01);
+
+        camera.lookAt(0, 0, 0);
+        previousMousePosition = {
+          x: e.touches[0].clientX,
+          y: e.touches[0].clientY
+        };
+        e.preventDefault();
+      }
     } else if (e.touches.length === 2) {
       // Pinch zoom
       const dx = e.touches[0].clientX - e.touches[1].clientX;
@@ -227,16 +251,27 @@ function initChess3D() {
       }
 
       previousTouchDistance = distance;
+      e.preventDefault();
     }
-    e.preventDefault();
   });
 
   canvas.addEventListener('touchend', (e) => {
+    const touchDuration = Date.now() - touchStartTime;
+
+    // If it was a quick tap without movement, treat it as a click
+    if (!hasMoved && touchDuration < 300 && e.changedTouches.length === 1) {
+      const touch = e.changedTouches[0];
+      const fakeEvent = {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      };
+      onCanvasClick(fakeEvent);
+    }
+
     isDragging = false;
     if (e.touches.length < 2) {
       previousTouchDistance = 0;
     }
-    e.preventDefault();
   });
 
   canvas.addEventListener('click', onCanvasClick);
