@@ -74,6 +74,7 @@ let selectedSquare = null;
 let possibleMoves = [];
 let currentTurn = 'white';
 let boardSquares = [];
+let gameOver = false;
 
 // Colors
 const COLORS = {
@@ -84,7 +85,8 @@ const COLORS = {
   selected: 0x6a6a6a,
   possibleMove: 0x6b9bd1,
   background: 0x2b2b2b,
-  highlight: 0xff8c00
+  highlight: 0xff8c00,
+  check: 0xff0000
 };
 
 let selectedPiece3D = null;
@@ -488,7 +490,7 @@ function createPieces() {
 }
 
 function onCanvasClick(event) {
-  if (currentTurn !== 'white') return;
+  if (currentTurn !== 'white' || gameOver) return;
 
   const rect = canvas.getBoundingClientRect();
   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -601,7 +603,7 @@ function updateBoardHighlights() {
 }
 
 function updatePieceHighlight() {
-  // Reset all piece colors
+  // Reset all piece colors and remove check borders
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
       const piece3D = pieces3D[row][col];
@@ -615,6 +617,12 @@ function updatePieceHighlight() {
             child.material.color.setHex(originalColor);
           }
         });
+
+        // Remove existing check border if any
+        const checkBorder = piece3D.children.find(child => child.userData.checkBorder);
+        if (checkBorder) {
+          piece3D.remove(checkBorder);
+        }
       }
     }
   }
@@ -627,6 +635,31 @@ function updatePieceHighlight() {
       }
     });
   }
+
+  // Add red border to king if in check
+  const whiteKing = findKing('white');
+  if (whiteKing && isKingInCheck('white')) {
+    const kingPiece = pieces3D[whiteKing.row][whiteKing.col];
+    addCheckBorder(kingPiece);
+  }
+
+  const blackKing = findKing('black');
+  if (blackKing && isKingInCheck('black')) {
+    const kingPiece = pieces3D[blackKing.row][blackKing.col];
+    addCheckBorder(kingPiece);
+  }
+}
+
+function addCheckBorder(piece3D) {
+  // Create a red box outline around the king
+  const size = 2.5;
+  const geometry = new THREE.BoxGeometry(size, size, size);
+  const edges = new THREE.EdgesGeometry(geometry);
+  const material = new THREE.LineBasicMaterial({ color: COLORS.check, linewidth: 3 });
+  const border = new THREE.LineSegments(edges, material);
+  border.position.set(0, 1.2, 0);
+  border.userData.checkBorder = true;
+  piece3D.add(border);
 }
 
 function makeMove(fromRow, fromCol, toRow, toCol) {
@@ -655,6 +688,21 @@ function makeMove(fromRow, fromCol, toRow, toCol) {
   piece3D.userData.col = toCol;
 
   currentTurn = currentTurn === 'white' ? 'black' : 'white';
+
+  // Update highlights to show check state
+  updatePieceHighlight();
+
+  // Check for checkmate
+  if (isCheckmate(currentTurn)) {
+    gameOver = true;
+    const winner = currentTurn === 'white' ? 'black' : 'white';
+    statusInfo.textContent = `checkmate! ${winner} wins!`;
+  } else if (isKingInCheck(currentTurn)) {
+    statusInfo.textContent = 'check!';
+  } else {
+    statusInfo.textContent = '';
+  }
+
   updateTurnInfo();
 }
 
@@ -699,7 +747,8 @@ function getPossibleMoves(row, col) {
     case 'k': moves.push(...getKingMoves(row, col, piece)); break;
   }
 
-  return moves;
+  // Filter out moves that would leave the king in check
+  return moves.filter(move => !wouldMoveResultInCheck(row, col, move.row, move.col));
 }
 
 function getPawnMoves(row, col, piece) {
@@ -827,6 +876,8 @@ function getKingMoves(row, col, piece) {
 }
 
 function makeAIMove() {
+  if (gameOver) return;
+
   const allMoves = [];
 
   for (let row = 0; row < 8; row++) {
@@ -846,7 +897,8 @@ function makeAIMove() {
   }
 
   if (allMoves.length === 0) {
-    statusInfo.textContent = 'you win!';
+    gameOver = true;
+    statusInfo.textContent = 'checkmate! white wins!';
     return;
   }
 
@@ -869,4 +921,106 @@ function evaluateMove(fromRow, fromCol, toRow, toCol) {
   score += (7 - centerDistance) * 2;
 
   return score;
+}
+
+// ============================================
+// CHECK AND CHECKMATE DETECTION
+// ============================================
+
+function findKing(color) {
+  const kingPiece = color === 'white' ? 'K' : 'k';
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      if (board[row][col] === kingPiece) {
+        return { row, col };
+      }
+    }
+  }
+  return null;
+}
+
+function isSquareUnderAttack(row, col, byColor) {
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const piece = board[r][c];
+      if (!piece) continue;
+
+      const pieceIsWhite = isWhitePiece(piece);
+      const attackerIsWhite = byColor === 'white';
+
+      if (pieceIsWhite !== attackerIsWhite) continue;
+
+      const moves = getPossibleMovesRaw(r, c);
+      if (moves.some(m => m.row === row && m.col === col)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function getPossibleMovesRaw(row, col) {
+  const piece = board[row][col];
+  if (!piece) return [];
+
+  const moves = [];
+  const pieceType = piece.toLowerCase();
+
+  switch (pieceType) {
+    case 'p': moves.push(...getPawnMoves(row, col, piece)); break;
+    case 'r': moves.push(...getRookMoves(row, col, piece)); break;
+    case 'n': moves.push(...getKnightMoves(row, col, piece)); break;
+    case 'b': moves.push(...getBishopMoves(row, col, piece)); break;
+    case 'q': moves.push(...getQueenMoves(row, col, piece)); break;
+    case 'k': moves.push(...getKingMoves(row, col, piece)); break;
+  }
+
+  return moves;
+}
+
+function isKingInCheck(color) {
+  const king = findKing(color);
+  if (!king) return false;
+
+  const oppositeColor = color === 'white' ? 'black' : 'white';
+  return isSquareUnderAttack(king.row, king.col, oppositeColor);
+}
+
+function wouldMoveResultInCheck(fromRow, fromCol, toRow, toCol) {
+  const piece = board[fromRow][fromCol];
+  const color = isWhitePiece(piece) ? 'white' : 'black';
+
+  const capturedPiece = board[toRow][toCol];
+  board[toRow][toCol] = piece;
+  board[fromRow][fromCol] = null;
+
+  const inCheck = isKingInCheck(color);
+
+  board[fromRow][fromCol] = piece;
+  board[toRow][toCol] = capturedPiece;
+
+  return inCheck;
+}
+
+function isCheckmate(color) {
+  if (!isKingInCheck(color)) return false;
+
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      const piece = board[row][col];
+      if (!piece) continue;
+
+      const pieceIsWhite = isWhitePiece(piece);
+      const playerIsWhite = color === 'white';
+
+      if (pieceIsWhite !== playerIsWhite) continue;
+
+      const moves = getPossibleMoves(row, col);
+      if (moves.length > 0) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
